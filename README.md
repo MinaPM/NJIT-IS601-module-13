@@ -180,7 +180,7 @@ A lightweight workflow for auto-detecting, auditing, and locking Python dependen
 ### Install
 
 ```bash
-pip install pipreqs pip-tools
+pip install pipreqs pip-tools pip-audit
 ```
 
 ### Workflow

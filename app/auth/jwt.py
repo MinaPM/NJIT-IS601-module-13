@@ -26,13 +26,16 @@ pwd_context = CryptContext(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against its hash."""
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password: str) -> str:
     """Hash a password using bcrypt."""
     return pwd_context.hash(password)
+
 
 def create_token(
     user_id: Union[str, UUID],
@@ -66,8 +69,8 @@ def create_token(
     }
 
     secret = (
-        settings.JWT_SECRET_KEY 
-        if token_type == TokenType.ACCESS 
+        settings.JWT_SECRET_KEY
+        if token_type == TokenType.ACCESS
         else settings.JWT_REFRESH_SECRET_KEY
     )
 
@@ -79,6 +82,7 @@ def create_token(
             detail=f"Could not create token: {str(e)}"
         )
 
+
 async def decode_token(
     token: str,
     token_type: TokenType,
@@ -89,34 +93,34 @@ async def decode_token(
     """
     try:
         secret = (
-            settings.JWT_SECRET_KEY 
-            if token_type == TokenType.ACCESS 
+            settings.JWT_SECRET_KEY
+            if token_type == TokenType.ACCESS
             else settings.JWT_REFRESH_SECRET_KEY
         )
-        
+
         payload = jwt.decode(
             token,
             secret,
             algorithms=[settings.ALGORITHM],
             options={"verify_exp": verify_exp}
         )
-        
+
         if payload.get("type") != token_type.value:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token type",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-            
+
         if await is_blacklisted(payload["jti"]):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has been revoked",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-            
+
         return payload
-        
+
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -130,6 +134,7 @@ async def decode_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
@@ -141,22 +146,22 @@ async def get_current_user(
     try:
         payload = await decode_token(token, TokenType.ACCESS)
         user_id = payload["sub"]
-        
+
         user = db.query(User).filter(User.id == user_id).first()
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-            
+
         if not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Inactive user"
             )
-            
+
         return user
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
