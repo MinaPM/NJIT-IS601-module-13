@@ -173,6 +173,67 @@ pip install -r requirements.txt
 
 ---
 
+## Python Dependency Management with `pipreqs` & `pip-tools`
+
+A lightweight workflow for auto-detecting, auditing, and locking Python dependencies.
+
+### Install
+
+```bash
+pip install pipreqs pip-tools
+```
+
+### Workflow
+
+#### 1. Detect dependencies
+```bash
+pipreqs . --print
+```
+Scans your source files and prints the packages your code actually imports — no manual tracking needed. Redirect to a file to save them:
+```bash
+pipreqs . --savepath requirements.in
+```
+
+#### 2. Audit for vulnerabilities
+```bash
+pip-audit -r requirements.txt
+```
+Checks your dependencies against known vulnerability databases (PyPI Advisory DB, OSV) and reports any issues.
+
+#### 3. Compile a locked requirements file
+```bash
+pip-compile requirements.in
+```
+Resolves the full dependency tree from your `requirements.in` and writes pinned, reproducible versions to `requirements.txt`.
+
+#### 4. Sync your environment
+```bash
+pip-sync requirements.txt
+```
+Installs exactly what's in `requirements.txt` — adding missing packages and removing anything not listed, keeping your environment in a clean, known state.
+
+---
+
+### Typical flow
+
+```
+pipreqs . --savepath requirements.in   # detect what your code needs
+pip-compile requirements.in            # resolve & pin versions
+pip-audit -r requirements.txt          # check for vulnerabilities
+pip-sync requirements.txt              # apply to your environment
+```
+
+### Tools
+
+| Tool | Purpose |
+|------|---------|
+| `pipreqs` | Infers dependencies from imports in your source code |
+| `pip-compile` | Pins full dependency tree for reproducibility |
+| `pip-audit` | Scans for known security vulnerabilities |
+| `pip-sync` | Keeps your environment in sync with the lockfile |
+
+
+
 # 🐳 5. (Optional) Docker Setup
 
 > Skip if Docker isn't used in this module.
